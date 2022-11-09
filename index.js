@@ -43,6 +43,7 @@ let participants = [];
 let joinPageWebcam = document.getElementById('joinCam');
 let meetingCode = '';
 let screenShareOn = false;
+let onMessageReceived = function () {};
 
 navigator.mediaDevices
   .getUserMedia({
@@ -668,6 +669,7 @@ async function toggleMic() {
     document.getElementById('unmuteMic').style.display = 'inline-block';
   }
 }
+
 async function toggleWebCam() {
   if (webCamEnable) {
     joinPageWebcam.style.backgroundColor = 'black';
@@ -757,6 +759,6 @@ function toggleControls() {
 
 function subscribeToCanvas() {
   // Subscribe to 'CANVAS'
-  console.log('subscribe');
   meeting?.pubSub?.subscribe('CANVAS', onMessageReceived);
+  console.log('subscribed');
 }

@@ -39,7 +39,7 @@
       rel="stylesheet"
     />
     <link href="index.css" rel="stylesheet" />
-    <title>JS-SDK | videosdk.live</title>
+    <title>Class</title>
     <style>
       #screenShare {
         /* margin-top: 20px; */
@@ -612,18 +612,30 @@
     <button id="clear-canvas" class="btn btn-info">Clear</button><br />
 
     <div id="drawing-mode-options" style="">
-      <label for="drawing-mode-selector">Mode:</label>
-      <!-- <select id="drawing-mode-selector">
-          <option>Pencil</option></select
-        > -->
+      <label for="pencil">Pencil:</label>
       <button class="brush-mode-selector" data-brush="Pencil" id="pencil">
         Pencil
       </button>
-      <label for="drawing-mode-selector">Mode:</label>
+
+      <label for="highlighter">Highlighter:</label>
+      <button class="brush-mode-selector" data-brush="Pencil" id="highlighter">
+        Highlighter
+      </button>
+
+      <label for="drawing-mode-selector">Eraser:</label>
 
       <button class="brush-mode-selector" data-brush="Eraser" id="eraser">
         Eraser
       </button>
+      <br />
+      <label for="undo">Undo:</label>
+      <button id="undo">Undo</button>
+
+      <label for="redo">Redo:</label>
+      <button id="redo">Redo</button>
+
+      <label for="delete">Delete:</label>
+      <button id="delete">Delete</button>
       <br />
 
       <label for="drawing-line-width">Line width:</label>
@@ -637,7 +649,7 @@
       /><br />
 
       <label for="drawing-color">Line color:</label>
-      <input type="color" value="#005E7A" id="drawing-color" /><br />
+      <input type="color" value="#000000" id="drawing-color" /><br />
     </div>
   </div>
   <!-- <button id="add" onclick="Add()">Add a rectangle</button> -->
@@ -648,147 +660,4 @@
 </html>
 <script src="fabric.js"></script>
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-
-<script>
-  var canvas = (window._canvas = new fabric.Canvas('whiteboard', {
-    width: 600,
-    height: 600,
-    backgroundColor: 'transparent',
-    isDrawingMode: true
-  }));
-  let activeColor = '#000000',
-    activeWidth = '1';
-  let prevSentData = '';
-
-  // var $ = function (id) {
-  //   return document.getElementById(id);
-  // };
-  // var json =
-  //   '{"objects":[{"type":"rect","originX":"center","originY":"center","left":300,"top":150,"width":150,"height":150,"fill":"#29477F","overlayFill":null,"stroke":null,"strokeWidth":1,"strokeDashArray":null,"strokeLineCap":"butt","strokeLineJoin":"miter","strokeMiterLimit":10,"scaleX":1,"scaleY":1,"angle":0,"flipX":false,"flipY":false,"opacity":1,"shadow":{"color":"rgba(94, 128, 191, 0.5)","blur":5,"offsetX":10,"offsetY":10},"visible":true,"clipTo":null,"rx":0,"ry":0,"x":0,"y":0},{"type":"circle","originX":"center","originY":"center","left":300,"top":400,"width":200,"height":200,"fill":"rgb(166,111,213)","overlayFill":null,"stroke":null,"strokeWidth":1,"strokeDashArray":null,"strokeLineCap":"butt","strokeLineJoin":"miter","strokeMiterLimit":10,"scaleX":1,"scaleY":1,"angle":0,"flipX":false,"flipY":false,"opacity":1,"shadow":{"color":"#5b238A","blur":20,"offsetX":-20,"offsetY":-10},"visible":true,"clipTo":null,"radius":100}],"background":""}';
-
-  // canvas.loadFromJSON(
-  //   json,
-  //   canvas.renderAll.bind(canvas)
-  //   //   function (o, object) {
-  //   //     fabric.log(o, object);
-  //   //   }
-  // );
-
-  fabric.Object.prototype.transparentCorners = false;
-
-  var drawingModeEl = $('#drawing-mode'),
-    drawingOptionsEl = $('#drawing-mode-options'),
-    drawingColorEl = $('#drawing-color'),
-    drawingShadowColorEl = $('#drawing-shadow-color'),
-    drawingLineWidthEl = $('#drawing-line-width'),
-    drawingShadowWidth = $('#drawing-shadow-width'),
-    drawingShadowOffset = $('#drawing-shadow-offset'),
-    pencil = $('#pencil'),
-    eraser = $('#eraser'),
-    brushSelector = $('.brush-mode-selector'),
-    clearEl = $('#clear-canvas');
-
-  clearEl.on('click', function () {
-    canvas.clear();
-  });
-
-  drawingModeEl.click(function () {
-    shiftDrawingMode();
-    console.log(canvas.isDrawingMode);
-  });
-
-  drawingColorEl.on('change', function () {
-    var brush = canvas.freeDrawingBrush;
-    activeColor = this.value;
-    brush.color = activeColor;
-    if (brush.getPatternSrc) {
-      brush.source = brush.getPatternSrc.call(brush);
-    }
-    console.log(activeColor);
-  });
-  drawingLineWidthEl.on('change', function () {
-    activeWidth = parseInt(this.value, 10) || 1;
-    canvas.freeDrawingBrush.width = activeWidth;
-    this.previousSibling.innerHTML = this.value;
-  });
-
-  brushSelector.click(brushSelectorFunction);
-
-  function shiftDrawingMode() {
-    canvas.isDrawingMode = !canvas.isDrawingMode;
-    discardSelection();
-  }
-
-  function brushSelectorFunction(brushType) {
-    if (!canvas.isDrawingMode) canvas.isDrawingMode = true;
-    let brush_type = $(this).data('brush');
-    changeBrush(brush_type);
-    setBrushProperties(brush_type);
-  }
-
-  function setBrushProperties(brushType) {
-    var brush = canvas.freeDrawingBrush;
-    brush.color = activeColor;
-    if (brush.getPatternSrc) {
-      brush.source = brush.getPatternSrc.call(brush);
-    }
-    brush.width = activeWidth;
-  }
-
-  function changeBrush(brushType) {
-    //   if (brushType === 'Pencil') {
-    //     const squareBrush = new fabric.PatternBrush(canvas);
-    //     squareBrush.getPatternSrc = function () {
-    //       const squareWidth = 1;
-    //       const squareDistance = 0;
-    //       const patternCanvas = fabric.document.createElement('canvas');
-    //       patternCanvas.width = patternCanvas.height =
-    //         squareWidth + squareDistance;
-    //       const ctx = patternCanvas.getContext('2d');
-    //       ctx.fillStyle = this.color;
-    //       ctx.fillRect(0, 0, squareWidth, squareWidth);
-    //       return patternCanvas;
-    //     };
-    //     canvas.freeDrawingBrush = squareBrush;
-    //   } else {
-    canvas.freeDrawingBrush = new fabric[`${brushType}Brush`](canvas);
-    //   }
-  }
-
-  function discardSelection() {
-    canvas.discardActiveObject();
-    canvas.requestRenderAll();
-  }
-  canvas.on({
-    'before:render': sendMessage
-    // 'object:added': sendMessage,
-    // 'object:removed': sendMessage
-  });
-  function convertToJSON() {
-    return JSON.stringify(canvas.toJSON());
-  }
-  function onMessageReceived(data) {
-    console.log(`New message received: ${data.message}`);
-    // console.log('message received');
-    if (prevSentData !== data.message) {
-      console.log('data changed while receiving message');
-
-      let newUpdates = JSON.parse(data.message);
-      canvas.loadFromJSON(newUpdates, canvas.renderAll.bind(canvas));
-    }
-  }
-
-  function sendMessage() {
-    let message = convertToJSON();
-    console.log('sending messageg:', message);
-    // debugger;
-    if (message !== prevSentData) {
-      console.log('data changed while sending message');
-      meeting?.pubSub?.publish('CANVAS', message, { persist: true });
-    }
-    console.log(prevSentData);
-    console.log(message);
-    console.log(prevSentData === message);
-    prevSentData = message;
-  }
-</script>
+<script src="whiteboard.js" type="module"></script>
