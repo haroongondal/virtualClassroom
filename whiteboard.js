@@ -128,17 +128,13 @@ canvas.on({
 });
 
 onMessageReceived = function ({ message }) {
-  console.log(`New message received`);
   // console.log('message received');
   let newUpdates = JSON.parse(message);
   // console.log(newUpdates);
 
   if (newUpdates.event === 'added') {
-    // console.log(newUpdates.event);
     addNewObject(newUpdates.target);
   } else if (newUpdates.event === 'removed') {
-    // console.log(newUpdates.event);
-
     removeObject(newUpdates.target);
   } else if (newUpdates.event === 'modified') {
     // console.log(newUpdates.event);
@@ -168,28 +164,30 @@ function sendFullCanvas() {
 
 function sendNewObject(obj) {
   let target = obj.target;
-  new fabric.Path.fromObject(target, function (foo) {
-    let _obj = foo;
-    console.log('adding new object: ' + foo);
-    target = JSON.stringify(_obj.target);
-    _obj.event = 'added';
-    _obj = JSON.stringify(_obj);
-    if (latestAddedObject !== target) {
-      sendMessage(_obj);
-      latestAddedObject = target;
-    }
-  });
+  let _obj = {};
+  // new fabric.Path.fromObject(target, function (foo) {
+  _obj.target = target;
+  // });
+  target = JSON.stringify(target);
+  _obj.event = 'added';
+  _obj = JSON.stringify(_obj);
+  if (latestAddedObject !== target) {
+    sendMessage(_obj);
+    latestAddedObject = target;
+  }
 }
 
 function removedObject(obj) {
-  console.log('object removed');
-  let target = JSON.stringify(obj.target);
-  let newObject = { ...obj };
-  newObject.event = 'removed';
-  // let message = newObject;
-  newObject = JSON.stringify(newObject);
+  let target = obj.target;
+  let _obj = {};
+  // new fabric.Path.fromObject(target, function (foo) {
+  _obj.target = target;
+  // });
+  target = JSON.stringify(target);
+  _obj.event = 'removed';
+  _obj = JSON.stringify(_obj);
   if (latestRemovedObject !== target) {
-    sendMessage(newObject);
+    sendMessage(_obj);
     latestRemovedObject = target;
   }
 }
@@ -207,20 +205,29 @@ function modifiedObject(obj) {
 }
 
 function addNewObject(obj) {
-  console.log('adding new obj:', obj);
+  let _obj = {};
   new fabric.Path.fromObject(obj, function (foo) {
-    canvas.add(foo);
+    _obj = foo.toObject([]);
+    if (latestAddedObject !== JSON.stringify(_obj)) {
+      canvas.add(foo);
+      latestAddedObject = JSON.stringify(_obj);
+    }
   });
-  latestAddedObject = JSON.stringify(obj);
+
   // latestUpdatedJSON = convertToJSON();
 }
 
 function removeObject(obj) {
   console.log('removing object');
+  let _obj = {};
   new fabric.Path.fromObject(obj, function (foo) {
+    _obj = foo.toObject([]);
     canvas.remove(foo);
+    console.log('removed');
   });
-  latestRemovedObject = JSON.stringify(obj);
+  if (latestRemovedObject !== JSON.stringify(_obj)) {
+    latestRemovedObject = JSON.stringify(_obj);
+  }
   // latestUpdatedJSON = convertToJSON();
 }
 
@@ -240,48 +247,19 @@ function renderFullCanvas(newUpdates) {
   canvas.loadFromJSON(newUpdates, canvas.renderAll.bind(canvas));
 }
 
-function convertToJSON() {
-  return JSON.stringify(canvas.toJSON());
-}
-
-// function onMessageReceived(data) {
-//   console.log(`New message received: ${data.message}`);
-//   // console.log('message received');
-//   if (latestUpdatedJSON !== data.message) {
-//     console.log('data changed while receiving message');
-//     // debugger;
-//     let newUpdates = JSON.parse(data.message);
-//     latestUpdatedJSON = data.message;
-//     canvas.loadFromJSON(newUpdates, canvas.renderAll.bind(canvas));
-//   }
-// }
-
-function sendMessage(message) {
-  throttleFunction = function () {
-    // let message = convertToJSON();
-    // console.log('sending message');
-    // debugger;
-    // if (message !== latestUpdatedJSON) {
-    //   console.log('data changed while sending message');
-    //   latestUpdatedJSON = message;
-    meeting?.pubSub?.publish('CANVAS', message, { persist: true });
-    // }
-    throttleFunction = '';
-  };
-  if (!timer) {
-    throttle();
-  }
-}
-
 function objectAddedFunction(obj) {
   setHistory();
   sendNewObject(obj);
 }
+
+function sendMessage(message) {
+  meeting?.pubSub?.publish('CANVAS', message, { persist: true });
+}
+
 function throttle() {
   let interval = setInterval(() => {
     if (typeof throttleFunction === 'function') {
       throttleFunction();
-      console.log('throttle function called');
       timer = true;
     } else {
       clearInterval(interval);
